@@ -3,116 +3,62 @@ import cv2
 import numpy as np
 import os
 
-
-Library = 'KnownFaces'
+#This makes it so that you do not have to individually encode for each image. But rather that you can just put the images in the KnownFaces folder and it will do all the encodings. 
+Library = 'KnownFaces' 
 known_faces = []
 names = []
 myList = os.listdir(Library)
-print(myList)
+#print(myList)
 for i in myList:
     curr = cv2.imread(f'{Library}/{i}')
-    known_faces.append(curr)
-    names.append(os.path.splitext(i)[0])
-print(names)
+    names.append(curr)
+    known_faces.append(os.path.splitext(i)[0])
+print(known_faces)
 
 
-def Encodings(known_faces):
+#function to encode all the images files for later use
+def Encodings(images):
     known_face_encodings = [] 
-    for i in known_faces:
+    for i in images:
         i = cv2.cvtColor(i, cv2.COLOR_BGR2RGB)
         face_encoding = face_recognition.face_encodings(i)[0]
         known_face_encodings.append(face_encoding)
     return known_face_encodings
 
-Known_encodings = Encodings(known_faces)
-print(Known_encodings)
+Known_encodings = Encodings(names)
+#print(Known_encodings)
+
+capture = cv2.VideoCapture(0)
 
 while True:
-    ret, frame = video_capture.read()
-    small_
-'''
-import face_recognition
-import cv2
-import numpy as np
+    ret, img = capture.read()
+    imgsmall = cv2.resize(img, (0,0), None, 0.25, 0.25)
+    imgsmall = cv2.cvtColor(imgsmall, cv2.COLOR_BGR2RGB)
 
-video_capture = cv2.VideoCapture(0)
+    Face_curframe = face_recognition.face_locations(imgsmall)
+    encodeCurFrame = face_recognition.face_encodings(imgsmall, Face_curframe)
 
-Elon_image = face_recognition.load_image_file("Images/elon-musk.jpg")
-Elon_face_encoding = face_recognition.face_encodings(Elon_image)[0]
-
-Bill_image = face_recognition.load_image_file("Images/Bill.jpg")
-Bill_face_encoding = face_recognition.face_encodings(Bill_image)[0]
-
-
-known_face_encodings = [
-    Elon_face_encoding,
-    Bill_face_encoding
-]
-known_face_names = [
-    "Elon",
-    "Bill"
-]
-
-
-face_locations = []
-face_encodings = []
-face_names = []
-process_this_frame = True
-
-while True:
-  
-    ret, frame = video_capture.read()
-
-
-    small_frame = cv2.resize(frame, (0, 0), fx=0.25, fy=0.25)
-
- 
-    rgb_small_frame = small_frame[:, :, ::-1]
-
-
-    if process_this_frame:
-       
-        face_locations = face_recognition.face_locations(rgb_small_frame)
-        face_encodings = face_recognition.face_encodings(rgb_small_frame, face_locations)
-
-        face_names = []
-        for face_encoding in face_encodings:
-      
-            matches = face_recognition.compare_faces(known_face_encodings, face_encoding)
-            name = "Unknown"
-
-          
-            face_distances = face_recognition.face_distance(known_face_encodings, face_encoding)
-            best_match_index = np.argmin(face_distances)
-            if matches[best_match_index]:
-                name = known_face_names[best_match_index]
-
-            face_names.append(name)
-
-    process_this_frame = not process_this_frame
-
-
-
-    for (top, right, bottom, left), name in zip(face_locations, face_names):
-      
-        top *= 4
-        right *= 4
-        bottom *= 4
-        left *= 4
-
-     
-        cv2.rectangle(frame, (left, top), (right, bottom), (0, 0, 255), 2)
-
-
-        cv2.rectangle(frame, (left, bottom - 35), (right, bottom), (0, 0, 255), cv2.FILLED)
-        font = cv2.FONT_HERSHEY_DUPLEX
-        cv2.putText(frame, name, (left + 6, bottom - 6), font, 1.0, (255, 255, 255), 1)
-
-    cv2.imshow('Video', frame)
-
+    for encodedFace,faceLocation in zip(encodeCurFrame,Face_curframe):
+        matches = face_recognition.compare_faces(Known_encodings,encodedFace)
+        facedist = face_recognition.face_distance(Known_encodings,encodedFace)
+        matchIndex = np.argmin(facedist)
+        print(matchIndex)
+        
+        if matches[matchIndex]:
+            name = known_faces[matchIndex].upper()
+        else:
+            name = 'Unkown'
+        top,right,bottom,left = faceLocation
+        top = top * 4
+        right = right * 4
+        bottom = bottom * 4
+        left = left * 4
+        cv2.rectangle(img, (left, top), (right, bottom), (255, 0, 0), 4)
+        cv2.rectangle(img, (left, bottom - 35), (right, bottom), (255, 0, 0), cv2.FILLED)
+        cv2.putText(img, name, (left + 6, bottom - 6), cv2.FONT_HERSHEY_COMPLEX,1,(255, 255, 255), 2)
     
+    cv2.imshow('Video', img)
     if cv2.waitKey(1) & 0xFF == ord('q'):
         break
-video_capture.release()
+capture.release()
 cv2.destroyAllWindows()
-'''
